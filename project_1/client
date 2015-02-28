@@ -1,0 +1,40 @@
+#!/usr/bin/python
+import socket
+import sys
+import ssl
+
+# build a new socket, and set the port as the default value
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+port = 27993
+
+# read parameters and set hostname/nuid
+hostname = sys.argv[len(sys.argv)-2]
+nuid = sys.argv[len(sys.argv)-1]
+
+# read options from command
+i = 1
+if sys.argv[i] == '-p':
+	port = sys.argv[i+1]
+	i += 2
+
+if sys.argv[i] == '-s':
+	port = 27994
+	s = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
+
+# basic socket operations
+s.connect((hostname, int(port)))
+s.send("cs5700spring2015 HELLO " + str(nuid) +"\n")
+data = s.recv(1024)
+
+# computer and reutrn the result to sever
+while('cs5700spring2015' in data and 'STATUS' in data):
+	tokens = data.split()
+	st = (tokens[2] + tokens[3] + tokens[4])
+	st = eval(st)
+	st = "cs5700spring2015 " + str(st) + "\n"
+	s.send(st)
+	data = s.recv(1024)
+s.close()
+
+# output flag
+print data.split()[1]
