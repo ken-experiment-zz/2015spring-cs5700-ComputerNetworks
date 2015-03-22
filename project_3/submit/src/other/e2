@@ -1,0 +1,16 @@
+#!/bin/bash
+
+for((iter=1; iter<=1; iter++))
+	do
+	for((cbr=1; cbr<=10; cbr++))
+		do
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex2.tcl Reno Reno $cbr
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex2.tcl NewReno Reno $cbr
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex2.tcl Vegas Vegas $cbr
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex2.tcl NewReno Vegas $cbr
+
+		done
+
+		python computation2.py ex2_result $iter
+	done
+

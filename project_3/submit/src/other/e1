@@ -1,0 +1,37 @@
+#!/bin/bash
+
+for((i=1; i<=10; i++))
+	do
+	for((num=1; num<= 10; num++))
+		do
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex1.tcl Tahoe $i
+			python computation1.py ex1_result Tahoe $i $num
+		done
+	done
+
+for((i=1; i<=10; i++))
+	do
+	for((num=1; num<= 10; num++))
+		do
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex1.tcl Reno $i
+			python computation1.py ex1_result Reno $i $num
+		done
+	done
+
+for((i=1; i<=10; i++))
+	do
+	for((num=1; num<= 10; num++))
+		do
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex1.tcl NewReno $i
+			python computation1.py ex1_result NewReno $i $num
+		done
+	done
+
+for((i=1; i<=10; i++))
+	do
+	for((num=1; num<= 10; num++))
+		do
+			/course/cs4700f12/ns-allinone-2.35/bin/ns ex1.tcl Vegas $i
+			python computation1.py ex1_result Vegas $i $num
+		done
+	done

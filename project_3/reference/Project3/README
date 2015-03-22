@@ -1,0 +1,33 @@
+Files in Project 3
+—- Analysis of TCP Variants and Queuing Methods.pdf	The paper
+—- source-code						The source codes
+—-—- tcl						TCL Source Codes
+—-—- Analysis.py					TCL parse program source Codes
+
+
+The source code has two parts
+part1 : tcl script - run simulations using ns-2, and generate trace file.
+part2 : python script - parse the trace file of ns-2
+
+PART1 - tcl scripts
+  
+  FUNCTION:
+    - set up network according to topology
+    - arrage flow schedule
+    - record packet trace file
+  
+  CHALLENGE:
+    - default TCP flow window_ = 20
+	  set TCP flow window_ = 1000000
+	  in order to utilize full potential of network
+
+PART2 - python script
+
+  FUNCTION:
+	- parsing tracefile according to trace format
+	- calculate performance related evaluatoion value 
+	  (throughput, latency, drop rate)
+  
+  CHALLENGE:
+    - manage a list to record the status of sended packet
+	  for the caculation of latency

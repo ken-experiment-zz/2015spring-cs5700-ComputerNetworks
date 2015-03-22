@@ -1,0 +1,25 @@
+#!/bin/bash
+
+for((iter=1; iter<=2; iter++))
+	do
+		/course/cs4700f12/ns-allinone-2.35/bin/ns ex3.tcl DropTail Reno
+		python computation3.py ex3_result/DropTail_Reno.tr $iter
+	done
+
+for((iter=1; iter<=2; iter++))
+	do
+		/course/cs4700f12/ns-allinone-2.35/bin/ns ex3.tcl DropTail SACK
+		python computation3.py ex3_result/DropTail_SACK.tr $iter
+	done
+
+for((iter=1; iter<=2; iter++))
+	do
+		/course/cs4700f12/ns-allinone-2.35/bin/ns ex3.tcl RED Reno
+		python computation3.py ex3_result/RED_Reno.tr $iter
+	done
+
+for((iter=1; iter<=2; iter++))
+	do
+		/course/cs4700f12/ns-allinone-2.35/bin/ns ex3.tcl RED SACK
+		python computation3.py ex3_result/RED_SACK.tr $iter
+	done

@@ -1,0 +1,35 @@
+Methodology:
+
+Experiment 1: TCP Performance Under Congestion
+GOAL:
+In this experiment, we are asked to set different CBR flow rate and test several TCP variants’ performance.
+
+METHOD:
+By setting CBR rate, we will compute throughput, latency, drop rate of each TCP variant to illustration how good they could perform.
+
+Experiment 2: Fairness Between TCP Variants
+GOAL:
+In this experiment, our goal is to test the allocation of a bandwidth while running 2 different TCP variants on it.
+
+METHOD:
+By combining different variants, we will calculate throughput, latency, drop rate for each TCP variants under competition.
+
+By setting the variable random as True, we set the sending packet behavior of CBR as randomly.
+
+Experiment 3: Influence of Queuing
+GOAL:
+In this experiment, we need to test the influence of the queuing discipline used by nodes on the overall throughput of flows.
+
+METHOD:
+By setting queue type, we will compute throughput, latency, drop rate to test the performance of the TCP variants and see how queue type would affect performance.
+
+Formula:
+Throughput = TransferSize / TransferTime
+TransferTime = TCPSEndtime - TCPStarttime
+
+PacketLosses = PacketSend - PacketReceived
+PacketLossesRatio = PacketLosses / PacketReceived
+
+Latency = TotalLatency / PacketReceived
+TotalLatency = Sum (PacketReceivedTime - PacketSentTime)
+
