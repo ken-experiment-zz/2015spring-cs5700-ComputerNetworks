@@ -1,0 +1,27 @@
+High-level approach:
+In the project, we implement a simpler version of HTTP, TCP, IP and Ethernet. In this project we take one command line of URL to download the corresponding webpage or file and then save it to the current directory. we implement all features of IP packets and a subset of TCP functionality which includes checksums of incoming/outgoing packets,handling sequence and acknowledgement numbers,dealing with timeout, putting the out-of-order incoming packets into correct order,discarding duplicate packets as well as implementing a congestion window.  We also build Ethernet frames for each packet dealing MAC resolution with ARP request.
+
+Here’s how the program works. In the main function, we will get a new object of HTTP, set its arguments and then let it run. Within the HTTP, we will construct an object of TCP. Same thing happens to TCP and IP, respectively initializing a IP and Ethernet object. But in the lowest layer, i.e. Ethernet, we will create a raw socket to send and receive data.
+
+In each layer, we will make a header by ourselves and combine it with data together then pass to the next level. Also, we will api of the lower level to send and receive data, which except for the Ethernet, are all implemented by us.
+
+Features implemented:
+TCP:
+We implemented the TCP pack header,checksum of incoming TCP packets and generate correct checksums for outgoing packets, performing the three-way handshake as well as handling connection teardown. And we deal with acknowledgement sequence and sequence, dynamically setting the congestion window to implement congestion and control. And put out-of-order packets in the correct order as well as discard duplicate packets.
+
+IP:
+We implemented the IP pack header, and all features of IP packets:validating the checksum of incoming/outgoing packets,setting correct version,header length,total length and protocol identifier. And we query the IP of remote HTTP server and source machine to set the source and destination IP in outgoing packet. And we implement validity check of IP headers, checksum and protocol identifier.
+
+Ethernet:
+We built Ethernet frames for each packet as well as IP and TCP headers, and we implemented MAC resolution with ARP requests.
+
+
+Challenges:
+TCP congestion window implementation and header packing, IP checksum calculation, ARP implementation.
+
+Team Member Contributions:
+We divided the assignment by one of us dealing with the network layer and application layer and the other one implemented transport layer and the extra credit.
+
+** Important **
+Please use sudo to run rawhttpget.
+Sometimes it will be slow due to networks situation. Please wait.
