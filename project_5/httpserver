@@ -1,0 +1,166 @@
+#!/usr/bin/python
+
+import re
+import os
+import sys
+import zlib
+import urllib
+import urllib2
+import hashlib
+import threading
+import commands
+from urlparse import parse_qs
+from cgi import parse_header, parse_multipart
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
+
+class Handler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        global memory
+        global cache
+        global hit
+        global tick
+
+        m = hashlib.md5()
+        m.update(self.path)
+        cache_filename = m.hexdigest() + ".cached"
+        print cache_filename
+
+        if cache_filename in cache:
+            print "Cache hit in the memory"
+            data = cache[cache_filename]
+            hit[cache_filename] += 1
+            tick[cache_filename] = 0
+
+            data = zlib.decompress(data)
+
+            # Send back response
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(data)
+        else:
+            # Get from disk
+            if os.path.isfile(cache_filename):
+                print "Cache hit in the disk"
+                with open(cache_filename, 'r') as f:
+                    data_compress = f.read()
+
+                data = zlib.decompress(data_compress)
+
+                # Send back response
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(data)
+
+            # Retrieve from origin
+            else:
+                print "Cache miss"
+                try:
+                    response = urllib2.urlopen(
+                        "http://" + origin + ":8080" + self.path)
+                    data = response.read()
+                except urllib2.HTTPError as e:
+                    data = e.fp.read()
+
+                # Send back response
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(data)
+
+                data_compress = zlib.compress(data)
+
+            print 'data length', len(data_compress)
+            while memory + len(data_compress) > 9000000:
+                # Find LRU
+                lru = None
+                max_tick = 0
+                min_hit = 1000000000
+
+                for i in cache:
+                    if tick[i] > max_tick and hit[i] < min_hit:
+                        lru = i
+
+                try:
+                    # Remove
+                    cache.pop(lru)
+                    hit.pop(lru)
+                    tick.pop(lru)
+                except:
+                    print lru
+
+                try:
+                    os.remove(cache_filename)
+                except:
+                    pass
+
+            cache[cache_filename] = data_compress
+            hit[cache_filename] = 1
+            tick[cache_filename] = 0
+
+            try:
+                with open(cache_filename, 'w') as f:
+                    f.write(data_compress)
+            except:
+                pass
+
+        # Update tick
+        for i in tick:
+            tick[i] += 1
+
+    def do_POST(self):
+        print 'in do_POST'
+        postvars = self.parse_POST()
+        client_ip = postvars['client_ip'][0]
+
+        ping_time = self.get_ping_time(client_ip)
+        print ping_time
+
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(ping_time)
+
+    def parse_POST(self):
+        ctype, pcache = parse_header(self.headers['content-type'])
+        if ctype == 'multipart/form-data':
+            postvars = parse_multipart(self.rfile, pcache)
+        elif ctype == 'application/x-www-form-urlencoded':
+            length = int(self.headers['content-length'])
+            postvars = parse_qs(
+                self.rfile.read(length),
+                keep_blank_values=1)
+        else:
+            postvars = {}
+        return postvars
+
+    def get_ping_time(self, ip):
+        cmd = "scamper -c 'ping -c 1' -i " + ip + \
+            " |awk 'NR==2 {print $7}'|cut -d '=' -f 2"
+        res = commands.getoutput(cmd)
+        if not res:
+            res = 'inf'
+
+        return res
+
+if __name__ == '__main__':
+    try:
+        port = int(sys.argv[2])
+        origin = sys.argv[4]
+    except:
+        print 'Errors occur while dealing with arguments. Exiting.'
+        sys.exit()
+
+    memory = 0
+    cache = {}
+    hit = {}
+    tick = {}
+
+    server = HTTPServer(('', port), Handler)
+    server.serve_forever()
+
+    t = threading.Thread(target=server.serve_forever)
+    t.setDaemon(True)
+    t.start()
+
+    while True:
+        pass

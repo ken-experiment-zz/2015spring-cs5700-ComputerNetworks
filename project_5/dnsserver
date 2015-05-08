@@ -1,0 +1,172 @@
+#!/usr/bin/python
+
+import threading
+import sys
+import re
+import socket
+import time
+import random
+import commands
+import urllib
+import urllib2
+import SocketServer
+from struct import pack, unpack
+
+"""
+ec2-52-4-98-110.compute-1.amazonaws.com	Origin server (running Web server on port 8080)
+ec2-52-0-73-113.compute-1.amazonaws.com		N. Virginia
+ec2-52-16-219-28.eu-west-1.compute.amazonaws.com	Ireland
+ec2-52-11-8-29.us-west-2.compute.amazonaws.com	Oregon, USA
+ec2-52-8-12-101.us-west-1.compute.amazonaws.com	N. California, USA
+ec2-52-28-48-84.eu-central-1.compute.amazonaws.com	Frankfurt, Germany
+ec2-52-68-12-77.ap-northeast-1.compute.amazonaws.com	Tokyo, Japan
+ec2-52-74-143-5.ap-southeast-1.compute.amazonaws.com	Singapore
+ec2-52-64-63-125.ap-southeast-2.compute.amazonaws.com	Sydney, Australia
+ec2-54-94-214-108.sa-east-1.compute.amazonaws.com	Sao Paulo, Brazil
+"""
+
+
+class FastestIP():
+
+    def __init__(self):
+        self.client_ip = None
+        self.geo_location = {"52.0.73.113": "39.0437,-77.4875",
+                             "52.16.219.28": "53.3331,-6.2489",
+                             "52.11.8.29": "45.8399,-119.7006",
+                             "52.8.12.101": "37.3394,-121.8950",
+                             "52.28.48.84": "50.1167,8.6833",
+                             "52.68.12.77": "35.6850,139.7514",
+                             "52.74.143.5": "1.2931,103.8558",
+                             "52.64.63.125": "-33.8615,151.2055",
+                             "54.94.214.108": "-23.4733,-46.6658"}
+
+        self.ping_time = {"52.0.73.113": 2000,
+                          "52.16.219.28": 2000,
+                          "52.11.8.29": 2000,
+                          "52.8.12.101": 2000,
+                          "52.28.48.84": 2000,
+                          "52.68.12.77": 2000,
+                          "52.74.143.5": 2000,
+                          "52.64.63.125": 2000,
+                          "54.94.214.108": 2000}
+
+        for ip in self.ping_time:
+            t = threading.Thread(target=self.get_ping_time, args=(ip, ))
+            t.start()
+
+    def get_ping_time(self, ip):
+        global port
+        while True:
+            try:
+                # Send and Recv data to each EC2 machine
+                url = 'http://' + ip + ':' + str(port)
+                data = urllib.urlencode({'client_ip': self.client_ip})
+                req = urllib2.Request(url, data)
+                response = urllib2.urlopen(req)
+
+                # Update
+                response_time = float(response.read())
+                self.ping_time[ip] = response_time
+            except:
+                pass
+
+            # print ip, self.ping_time[ip], ' ms'
+                    
+            time.sleep(1)
+
+    def getIP(self, client):
+        if client == self.client_ip:
+            ip = self.get_from_ping(client)
+        else:
+            self.client_ip = client
+            try:
+                ip = self.get_from_geo(client)
+            except:
+                ip = random.choice(self.geo_location.keys())
+            print 'self.client', self.client_ip
+
+        return ip
+
+    def get_from_ping(self, client):
+        min_time = float('inf')
+        min_ip = None
+
+        for ip in self.ping_time:
+            if self.ping_time[ip] < min_time:
+                min_time = self.ping_time[ip]
+                min_ip = ip
+
+        return ip
+
+    def get_from_geo(self, client):
+        cmd = 'curl ipinfo.io/' + client
+        res = commands.getoutput(cmd)
+        data = re.findall(r"\"loc\": \"(.*?)\"", res)
+        client_geo = data[0]
+
+        min_distance = float('inf')
+        min_ip = None
+
+        for ip in self.geo_location:
+            dis = self.geo_distance(client_geo, self.geo_location[ip])
+            if dis < min_distance:
+                min_distance = dis
+                min_ip = ip
+                print min_ip
+
+        return min_ip
+
+    def geo_distance(self, src_geo, dst_geo):
+        src = src_geo.split(',')
+        dst = dst_geo.split(',')
+
+        a = (float(src[0]) - float(dst[0])) ** 2
+        b = (float(src[1]) - float(dst[1])) ** 2
+
+        return a + b
+
+
+class MyUDPHandler(SocketServer.BaseRequestHandler):
+
+    def handle(self):
+        global fastIP
+        msg = self.request[0]
+        s = self.request[1]
+
+        # Make a pkt
+        ID = msg[:2]
+        flags = pack('!H', 0b1000000110000000)
+        count = pack('!HHHH', 1, 1, 0, 0)
+        header = ID + flags + count
+
+        question = msg[12:]
+
+        answer_name = pack('!H', 0xc00c)
+        answer_type = pack('!H', 1)
+        answer_class = pack('!H', 1)
+        answer_ttl = pack('!I', 600)
+        answer_rlength = pack('!H', 4)
+
+        ip = fastIP.getIP(self.client_address[0])
+        ip = socket.inet_aton(ip)
+        answer_rdata = ip
+
+        answer = answer_name + answer_type + answer_class + \
+            answer_ttl + answer_rlength + answer_rdata
+
+        msg = header + question + answer
+
+        s.sendto(msg, self.client_address)
+
+
+if __name__ == "__main__":
+    try:
+        name = sys.argv[4]
+        port = int(sys.argv[2])
+    except Exception:
+        print 'Not enough arguments. Exiting Program.'
+        sys.exit()
+
+    fastIP = FastestIP()
+    server = SocketServer.UDPServer(('', port), MyUDPHandler)
+    server.serve_forever()

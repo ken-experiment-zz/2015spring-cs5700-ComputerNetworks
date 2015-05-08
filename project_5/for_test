@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#scp -r /Users/Ken/Documents/2015spring-cs5700-ComputerNetworks/project_5 wangzet@cs5700cdnproject.ccs.neu.edu:~/Documents
+
+#ssh wangzet@cs5700cdnproject.ccs.neu.edu "./Documents/project_5/deployCDN -p 50052 -o ec2-52-4-98-110.compute-1.amazonaws.com -n cs5700cdn.example.com -u wangzet -i .ssh/id_rsa"
+
+ssh wangzet@cs5700cdnproject.ccs.neu.edu "./Documents/project_5/runCDN -p 50052 -o ec2-52-4-98-110.compute-1.amazonaws.com -n cs5700cdn.example.com -u wangzet -i .ssh/id_rsa"

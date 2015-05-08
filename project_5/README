@@ -1,0 +1,25 @@
+High-level approach:
+
+In this project we implement a executable httpserver and dnsserver. 
+
+We use the BaseHTTPServer library to deal with the GET request from the client, and return the information the client asked for from the original server. In order to enhance the performance of the httpserver responding speed, we use memory cache to store the data asked before and in order to make the cache mechanism stable we also use disk to back-up the data. What's more we used a variable to count the number of times we ask for a single data, when the memory is almost full we replace the less contacted data with the new data to cache in the memory and disk. We use hashlib to hash the path to a hex format cached file name and using the file name as the key and the data as the value.In this way we successfully enhance the performance of the httpserver. If we have already cached the data, we can directly response it back to the client.
+
+In dnsserver, we use socket to receive and send DNS packet. But instead of using library in python, we write our own version to pack and unpack DNS packet, just like IP and TCP packet in project 4. In order to enhance the performance we use scamper command :"scamper -c 'ping -c 1' -i " + [ip address] + \" |awk 'NR==2 {print $7}'|cut -d '=' -f 2" to measure the latency, let different EC2 server ping the client IP address, and compare the latency between them, and get the smallest latency EC2 server, and then let client connect to that EC2 server, then the performance is improved in this way. And the first request we send them a server based on the geo-location and at the same time we use the other thread to call the function to let the different server ping the client to get the better performance server, in these ways we enhance the performance of the program.
+
+
+Challenges:
+
+At first we do not know how to deal with the GET request from the client, and then we find a library BaseHTTPServer, and rewrite the do_GET()function to handle the GET request from the client.
+
+Other challenge part is how to cache the data effectively, at first we use hashlib to get the filename and then cache the data in the disk,but the performance is not very good,so we change the way to cache the data both in our memory and disk using dictionary,mapping the hashed name to the data.
+
+
+And the most challenging part in this project is how to find a best replica server by calculating the best time-to-completion for downloading a Web page. We solved it in the way we mentioned above, use scamper command to measure the latency. What's more in dnsserver, the challenge is to understand the packet format correctly,we read a lot of material to understand the packet format,and then we write our own version to pack and unpack DNS packet.
+
+If we have more time we will try and find more techniques to get the best time-to-completion for downloading a Web page, and maybe cache the other information to help us find the best performance server to the client and make the decision more precisely.
+
+Note:
+While running stopCDN, it might appear 'permission denied' because we use 'killall httpserver' to stop our process. But it works fine. We can successfully terminate them.
+
+** Important **
+Please run deploy/run/stopCDN in the right directory. Since I cannot know the running environment, I set it as root directory as default.
